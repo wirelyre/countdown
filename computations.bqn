@@ -66,3 +66,8 @@ struct Instruction computations[] = {
   {•Out∾´ToC¨ToInst𝕩}¨ adds
   {•Out∾´ToC¨ToInst𝕩}¨ muls
 •Out "};"
+
+
+
+# ToBinary ← {⟨lhs,rhs,op⟩:⟨lhs+rhs×16,⊑"+-*/"⊐op⟩}
+# "web/computations.bin" •FBytes ∾ToBinary¨∾ToInst¨(ones∾adds∾muls)
