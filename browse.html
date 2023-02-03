@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+<title>Countdown search</title>
+<style type="text/css">
+  body {
+    display: grid;
+    grid-gap: 20px;
+    justify-items: center;
+    margin: 10px 0;
+  }
+
+  #target { width: 6em; }
+  #inputs {
+    display: grid;
+    max-width: 490px;
+    grid-template-columns: repeat(6, 1fr);
+    grid-gap: 10px;
+  }
+  .input {
+    font-size: 1.5rem;
+    width: 2em;
+    text-align: center;
+    appearance: textfield;
+    margin: 0 0.4rem;
+  }
+  .input::-webkit-inner-spin-button, 
+  .input::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+     margin: 0; 
+  }
+  .input:invalid {
+    background-color: hsl(350, 100%, 85%);
+  }
+
+  #numbers {
+    max-width: 490px;
+    display: grid;
+    grid-template-columns: repeat(3, 150px);
+    grid-gap: 1rem;
+    justify-items: center;
+  }
+  @media (max-width: 510px) {
+    #inputs { grid-template-columns: repeat(3, 1fr); }
+    #numbers { grid-template-columns: repeat(2, 150px); }
+  }
+  @media (max-width: 336px) {
+    #numbers { grid-template-columns: repeat(1, 150px); }
+  }
+
+  .hundred {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-gap: 3px;
+    width: min-content;
+  }
+  .num { width: 12px; height: 12px; background-color: #ddd; }
+  .num:hover { background-color: #888; }
+  .num.possible { background-color: hsl(210, 40%, 50%); }
+  .num.possible:hover { background-color: hsl(210, 100%, 30%); }
+
+  #results {
+    font-family: sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.25;
+    white-space: pre;
+  }
+</style>
+
+<body>
+
+<input type="number" min="1" max="999999" id="target" class="input">
+
+<form id="inputs">
+  <input type="number" min="1" max="100" id="input-1" class="input">
+  <input type="number" min="1" max="100" id="input-2" class="input">
+  <input type="number" min="1" max="100" id="input-3" class="input">
+  <input type="number" min="1" max="100" id="input-4" class="input">
+  <input type="number" min="1" max="100" id="input-5" class="input">
+  <input type="number" min="1" max="100" id="input-6" class="input">
+</form>
+
+<div id="numbers">
+
+  <script>
+    function hundred(start) {
+      document.write('<div class="hundred">');
+      for (let i = 0; i < 100; i++) {
+        document.write('<div class="num" id="'+(i + start)+'"></div>');
+      }
+      document.write('</div>');
+    }
+
+    hundred(100);
+    hundred(200);
+    hundred(300);
+    hundred(400);
+    hundred(500);
+    hundred(600);
+    hundred(700);
+    hundred(800);
+    hundred(900);
+  </script>
+</div>
+
+<div id="results"></div>
+
+<script type="module">
+import init, {reachable, computations} from "./pkg/countdown.js";
+async function main() {
+  await init();
+
+  let target = document.getElementById("target");
+  let results = document.getElementById("results");
+
+  function updateGrid() {
+    let nums = [...document.querySelectorAll("#inputs>input")];
+    let vals = nums.map(x => parseInt(x.value, 10) || 0);
+
+    let r = new Set(reachable(vals));
+    for (let i = 100; i < 1000; i++) {
+      if (r.has(i))
+        document.getElementById(i).classList.add("possible");
+      else
+        document.getElementById(i).classList.remove("possible");
+    }
+  }
+
+  function updateComputations() {
+    if (target.value == "" || !target.validity.valid) {
+      results.innerHTML = "";
+      return;
+    }
+
+    let nums = [...document.querySelectorAll("#inputs>input")];
+    let vals = nums.map(x => parseInt(x.value, 10) || 0);
+    let c = computations(vals, parseInt(target.value, 10));
+
+    results.innerHTML = "<b>" + target.value + "</b>";
+
+    if (c.length == 0) {
+      results.innerHTML += " is impossible!";
+      return;
+    }
+    for (let ex of c) {
+      results.innerHTML += "\n= " + ex;
+    }
+  }
+  target.addEventListener("input", updateComputations);
+
+  for (let input of document.querySelectorAll(".input")) {
+    input.addEventListener("input", updateGrid);
+    input.addEventListener("input", updateComputations);
+  }
+
+  updateComputations();
+  updateGrid();
+
+  for (let el of document.querySelectorAll(".num")) {
+    el.addEventListener("mouseover", () => { target.placeholder = el.id; });
+    el.addEventListener("mouseout", () => {
+      if (target.placeholder == el.id)
+        target.placeholder = "";
+    });
+    el.addEventListener("click", () => {
+      target.value = el.id;
+      updateComputations();
+    });
+  }
+}
+main();
+</script>
